@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
-
+import scipy.stats as stats
 
 
 datos = pd.read_csv("Houses.txt", sep=r"\s+")
@@ -160,3 +160,85 @@ print("VALORES ATIPICOS MEDIDAS:")
 print(outliers_medidas)
 print("--------------------------")
 print("El histograma es más útil para observar cómo se distribuyen las frecuencias en distintos intervalos de valores. En cambio, el gráfico de cajas resume la distribución mediante los cuartiles, la mediana y los valores atípicos, permitiendo comparar conjuntos de datos y detectar outliers de forma más sencilla.")
+
+
+# Ejercicio 3: Supongamos que la ciudad de Florida decide sortear una casa. ¿Cuál es la probabilidad aproximada, estimada a partir de la 
+# información que tenemos de que el ganador reciba una casa que valga entre 200 y 300 mil dólares? Dar un intervalo con una confianza del
+# 95 % para la probabilidad verdadera. Justificar cada paso realizado.
+# Rta: La probabilidad estimada de que el ganador reciba una casa valuada entre 200/300 mil dólares es del 34 %. Con un nivel de confianza del
+# 95 %, se estima que la probabilidad verdadera se encuentra entre 24.72 % y 43.28 
+
+# 1. Carga de datos desde el github
+#url = "https://raw.githubusercontent.com/Cirodelpiero/TP-2-Probabilidad-y-Estad-stica/master/Houses.txt"
+#df_casas = pd.read_csv(url, sep=r'\s+')
+#n_casas = len(df_casas)  # Tamaño 
+
+# Filtramos: precios entre 200 y 300 inclusive
+casas_en_rango = datos[(datos['price'] >= 200) & (datos['price'] <= 300)]
+na = len(casas_en_rango)
+
+# Se calcula la probabilidad empírica como: casos favorables / casos totales
+# Se filtran los precios en el intervalo inclusivo 200, 300 mil dólares
+n_casas = len(datos)
+# Se Calcula  el estimador puntual de la proporción muestral (p1)
+p1 = na / n_casas # Resultado de proporción
+
+
+# Para aproximar a la Distribución Normal por el teorema central del límite, se verifica:
+# 1. Muestra grande: n = 100 >= 30 //// Éxitos/Fracasos esperados: n*p1 = 34 >= 5  y  n*(1-p1) = 66 >= 5
+# Si se cumplen ambos, queda justificado el uso de la variable tipificada Z
+
+# Para un nivel de confianza del 95% (1 - alfa = 0.95), se busca en la tabla normal el valor crítico acumulado para una probabilidad de 0.975
+
+
+# Se aplica la fórmula matemática: p1 +/- Z_(alfa/2) * sqrt( (p1 * (1 - p1)) / n )
+z_critico = stats.norm.ppf(0.975)  # El Z aprox. es 1.96
+
+# Error estándar e Intervalo según fórmula exacta de la página 11 de la Clase 7
+# Error Estándar de la proporción muestral
+error_estandar = math.sqrt((p1 * (1 - p1)) / n_casas)
+# Margen de error global (Z * error estándar)
+margen_error = z_critico * error_estandar
+# Límites finales del intervalo (restando y sumando el margen a p1)
+lim_inferior = p1 - margen_error
+lim_superior = p1 + margen_error
+
+print(f"Casas en rango: {na}")
+print(f"Probabilidad estimada (p1): {p1:.4f} ({p1*100:.2f}%)")
+print(f"Intervalo de Confianza (95%): [{lim_inferior:.4f} ; {lim_superior:.4f}]\n")
+
+
+
+# Ejercicio 4: Realizar un gráfico de precios en función de la superficie. ¿Nota alguna relación entre estas variables?. 
+# Estimar el coeficiente de correlación lineal entre ambas. ¿Qué significa su valor?
+
+# Se nota una relación entre las variables, el gráfico de dispersión muestra una relación lineal positiva y directa, a mayor superficie en metros cuadrados, el precio de la propiedad tiende a aumentar
+
+# Coeficiente de correlación lineal: Su valor es de 0.8522
+
+# Su valor, al ser un valor positivo y muy cercano a 1, significa que existe una asociación lineal fuerte y directa entre el tamaño de la vivienda y su precio
+
+#  Variables continuas a analizar según la consigna (Acá las definimos)
+X = datos['size']   # Variable en el eje X: Superficie (en metros cuadrados)
+Y = datos['price']  # Variable en el eje Y: Precio (en miles de dólares)
+
+
+# Para el gráfico de dispersión: Graficamos la nube de puntos para evaluar visualmente si existe
+# Justificación: Graficamos la nube de puntos para evaluar visualmente si hay alguna tendencia o relación geométrica entre ambas variables
+plt.figure(figsize=(8, 5))
+plt.scatter(X, Y, color='purple', alpha=0.7)
+
+# Formato del gráfico
+plt.title('Gráfico de Dispersión: Precio en función de la Superficie')
+plt.xlabel('Superficie (en metros cuadrados)')
+plt.ylabel('Precio (en miles de dólares)')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
+
+
+# Para el Coeficiente de Correlación de Pearson:
+# Calculamos el coeficiente 'r' de Pearson para cuantificar la fuerza y la dirección de la asociación lineal entre X e Y
+r, p_valor = stats.pearsonr(X, Y)
+
+
+print(f"Coeficiente de correlación lineal de Pearson (r): {r:.4f}")
