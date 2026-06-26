@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 import scipy.stats as stats
-
+import numpy as np
 
 datos = pd.read_csv("Houses.txt", sep=r"\s+")
 
@@ -241,4 +241,78 @@ plt.show()
 r, p_valor = stats.pearsonr(X, Y)
 
 
-print(f"Coeficiente de correlación lineal de Pearson (r): {r:.4f}")
+print(f"Coeficiente de correlación lineal de Pearson (r): {r:.4f}\n")
+
+
+# Ejercicio 5: Encontrar los coeficientes β0 y β1 por mínimos cuadrados de la recta que mejor ajusta a estas
+#variables (precio vs superficie).
+
+# Calculamos covarianza y varianza para obtener la pendiente (Beta_1) y la ordenada (Beta_0)
+covarianza = datos['size'].cov(datos['price'])
+varianza_x = datos['size'].var()
+beta_1 = covarianza / varianza_x
+beta_0 = datos['price'].mean() - beta_1 * datos['size'].mean()
+# Printeamos los resultados obtenidos
+print("PUNTO 5: ")
+print(f"Beta_1 (Pendiente): {beta_1:.4f}")
+print(f"Beta_0 (Ordenada al origen): {beta_0:.4f}")
+print(f"Ecuación estimada: Y = {beta_0:.4f} + {beta_1:.4f} * X\n")
+
+#Ejercicio 5a:  Agregar la recta al gráfico hecho en el inciso anterior.
+plt.figure(figsize=(8, 5))
+plt.scatter(datos['size'], datos['price'], color='purple', alpha=0.7, label='Datos reales')
+
+# Buscamos los extremos de la superficie para trazar una recta continua
+x_min = datos['size'].min()
+x_max = datos['size'].max()
+x_recta = np.array([x_min, x_max])
+y_recta = beta_0 + beta_1 * x_recta
+
+# Graficamos la recta
+plt.plot(x_recta, y_recta, color='red', linewidth=2, label='Recta de ajuste')
+plt.title('Gráfico de Dispersión: Precio en función de la Superficie con Recta de Regresión')
+plt.xlabel('Superficie (m²)')
+plt.ylabel('Precio (en miles de dólares)')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend()
+plt.show()
+plt.close()
+
+#Ejercicio 5b: Estimar un precio para una propiedad cuya superficie sea de 5000 m2. ¿Qué tanta confianza tengo en esta estimación?
+
+superficie_test = 5000
+precio_estimado = beta_0 + beta_1 * superficie_test
+
+print("PUNTO 5b: ")
+print(f"Precio estimado para 5000 m²: {precio_estimado:.2f} miles de dólares.\n") #Confianza: muy baja. Es una extrapolación, ya que el valor máximo de la lista es menor.
+
+
+# Ejercicio 5c: Calcular el coeficiente de determinación. ¿Qué significa su valor?
+
+# Elevamos al cuadrado el coeficiente de correlación r de Pepy arson para obtener el R²
+r_cuadrado = datos['size'].corr(datos['price']) ** 2
+
+print("PUNTO 5c: ")
+print(f"R²: {r_cuadrado:.4f} (o {r_cuadrado*100:.2f}%)")
+print(f"El {r_cuadrado*100:.2f}% de la variabilidad de los precios es explicada por la superficie.\n")
+
+
+# Ejercicio 6: Si yo quisiera deparar o estimar el precio de una propiedad a partir de otra característica de
+# la misma (superficie o impuestos), ¿a partir de cuál me conviene estimarla? ¿Por qué?
+
+X1 = datos['size']   # Superficie
+X2 = datos['taxes']  # Impuestos
+precio_dependiente = datos['price'] # Precio
+
+# Calculamos los coeficientes de correlación r de Pearson
+resultado_superficie = stats.pearsonr(X1, precio_dependiente)
+resultado_impuestos = stats.pearsonr(X2, precio_dependiente)
+# Nos quedamos con la primera posición [0], que es donde está el coeficiente de correlación (r)
+r_superficie = resultado_superficie[0]
+r_impuestos = resultado_impuestos[0]
+
+print("PUNTO 6: ")
+print(f"Coeficiente de correlación lineal - Precio vs Superficie (r1): {r_superficie:.4f}")
+print(f"Coeficiente de correlación lineal - Precio vs Impuestos (r2): {r_impuestos:.4f}")
+#Conviene estimar el precio de una propiedad a partir de la Superficie porque el valor obtenido para la superficie (r1= 0.8338)
+#es mayor que el de los impuestos (r2 = 0.6267). Esto demuestra que hay una con menor dispersión entre el precio y la superficie
